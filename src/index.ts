@@ -8,6 +8,7 @@ import { dashboardRoutes } from "./routes/dashboard.ts";
 import { tagRoutes } from "./routes/tags.ts";
 import { authMiddleware } from "./lib/auth.ts";
 import { openApiSpec } from "./lib/openapi.ts";
+import { sendTestEmail } from "./services/email.ts";
 
 const app = new Hono();
 
@@ -17,7 +18,7 @@ app.use(
     origin: process.env.CORS_ORIGIN ?? "http://localhost:3000",
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
-  }),
+  })
 );
 
 app.use("/api/*", logger());
@@ -28,6 +29,38 @@ api.route("/auth", authRoutes);
 
 api.get("/health", (c) => c.json({ status: "ok" }));
 api.get("/openapi.json", (c) => c.json(openApiSpec));
+
+api.post("/test-email", async (c) => {
+  const body = (await c.req.json()) as { to?: string };
+  if (!body.to) return c.json({ error: '"to" email is required' }, 400);
+
+  const to = body.to.trim().toLowerCase();
+
+  try {
+    const result = await sendTestEmail(to);
+    const parsed = (() => {
+      try {
+        return JSON.parse(result.body);
+      } catch {
+        return result.body;
+      }
+    })();
+    return c.json({
+      success: result.status >= 200 && result.status < 300,
+      sentTo: to,
+      brevoStatus: result.status,
+      brevoResponse: parsed,
+      config: {
+        senderEmail: process.env.BREVO_SENDER_EMAIL ?? "(not set)",
+        senderName: process.env.BREVO_SENDER_NAME ?? "(not set)",
+        apiKeySet: !!process.env.BREVO_API_KEY,
+        apiKeyPrefix: process.env.BREVO_API_KEY?.slice(0, 12) + "...",
+      },
+    });
+  } catch (err: any) {
+    return c.json({ success: false, error: err.message }, 500);
+  }
+});
 
 api.use("/*", authMiddleware);
 api.route("/memos", memoRoutes);
@@ -40,9 +73,9 @@ app.get(
   "/docs",
   apiReference({
     spec: { url: "/api/openapi.json" },
-    pageTitle: "AI Note Taker — API Docs",
+    pageTitle: "Untools Notes — API Docs",
     theme: "default",
-  }),
+  })
 );
 
 const port = Number(process.env.PORT ?? 3001);

@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.3.1 — 2026-03-09
+
+Admin & debugging endpoints.
+
+- List all users endpoint (GET /auth/users) with email verified status, memo/tag counts
+- Delete user by ID endpoint (DELETE /auth/user/:id)
+- Test email endpoint (POST /test-email, no auth) for Brevo debugging
+- Improved email service logging and env var trimming
+
+## 0.3.0 — 2026-03-09
+
+Email verification and forgot password.
+
+- 6-digit OTP email verification on registration (via Brevo)
+- Login blocked until email is verified (403 + needsVerification flag)
+- Resend verification code endpoint
+- Forgot password flow with OTP code
+- Reset password endpoint
+- Delete user endpoint (accessible via Scalar API docs)
+- OtpCode model with expiry and used tracking
+- Updated OpenAPI spec with all new auth endpoints
+
+## 0.2.0 — 2026-03-09
+
+Email + password authentication.
+
+- User model with bcrypt password hashing
+- Register, login, and me endpoints under /api/auth
+- JWT Bearer auth middleware on all protected routes
+- All data scoped to authenticated user (no more hardcoded default-user)
+- Scalar API docs with Bearer security scheme at /docs
+- Seed creates demo user (demo@example.com / demo1234)
+
 ## 0.1.0 — 2026-03-09
 
 Initial backend implementation.

@@ -4,9 +4,9 @@ export const openApiSpec = {
   openapi: "3.1.0",
   info: {
     title: "AI Note Taker API",
-    version: "0.2.0",
+    version: "0.3.0",
     description:
-      "Structured decision memo API — Bun + Hono + Prisma + Postgres. Register via API docs, then use Bearer token for all protected routes.",
+      "Structured decision memo API — Bun + Hono + Prisma + Postgres. Register via API docs, verify email with OTP, then login to get a Bearer token.",
   },
   servers: [{ url: "/api", description: "Local" }],
   paths: {
@@ -14,7 +14,8 @@ export const openApiSpec = {
       post: {
         tags: ["Auth"],
         summary: "Register a new user",
-        description: "Create a new account. Returns a JWT token.",
+        description:
+          "Create account and send a 6-digit verification code to the email. Must call /auth/verify-email next.",
         requestBody: {
           required: true,
           content: {
@@ -25,10 +26,10 @@ export const openApiSpec = {
         },
         responses: {
           "201": {
-            description: "Created",
+            description: "Created — verification code sent",
             content: {
               "application/json": {
-                schema: { $ref: "#/components/schemas/AuthResponse" },
+                schema: { $ref: "#/components/schemas/MessageResponse" },
               },
             },
           },
@@ -37,11 +38,64 @@ export const openApiSpec = {
         },
       },
     },
+    "/auth/verify-email": {
+      post: {
+        tags: ["Auth"],
+        summary: "Verify email with OTP",
+        description:
+          "Submit the 6-digit code received via email. Returns a JWT on success.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/VerifyEmailInput" },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Email verified — JWT returned",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/AuthResponse" },
+              },
+            },
+          },
+          "400": { description: "Invalid or expired code" },
+        },
+      },
+    },
+    "/auth/resend-verification": {
+      post: {
+        tags: ["Auth"],
+        summary: "Resend verification code",
+        description: "Invalidates previous codes and sends a new 6-digit OTP.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/ResendVerificationInput" },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "OK",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/MessageResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
     "/auth/login": {
       post: {
         tags: ["Auth"],
         summary: "Login",
-        description: "Authenticate with email + password. Returns a JWT token.",
+        description:
+          "Authenticate with email + password. Email must be verified first.",
         requestBody: {
           required: true,
           content: {
@@ -60,6 +114,61 @@ export const openApiSpec = {
             },
           },
           "401": { description: "Invalid credentials" },
+          "403": {
+            description: "Email not verified (includes needsVerification flag)",
+          },
+        },
+      },
+    },
+    "/auth/forgot-password": {
+      post: {
+        tags: ["Auth"],
+        summary: "Request password reset code",
+        description:
+          "Sends a 6-digit reset code to the email if the account exists.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/ForgotPasswordInput" },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "OK (always succeeds to prevent email enumeration)",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/MessageResponse" },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/auth/reset-password": {
+      post: {
+        tags: ["Auth"],
+        summary: "Reset password with OTP",
+        description: "Verify the reset code and set a new password.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/ResetPasswordInput" },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Password reset successful",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/MessageResponse" },
+              },
+            },
+          },
+          "400": { description: "Invalid or expired code" },
         },
       },
     },
@@ -78,6 +187,58 @@ export const openApiSpec = {
             },
           },
           "401": { description: "Unauthorized" },
+        },
+      },
+    },
+    "/auth/users": {
+      get: {
+        tags: ["Auth"],
+        summary: "List all users",
+        description:
+          "Returns all users with their status, ID, email verification state, and memo/tag counts.",
+        security: bearerSecurity,
+        responses: {
+          "200": {
+            description: "OK",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: { $ref: "#/components/schemas/UserListItem" },
+                },
+              },
+            },
+          },
+          "401": { description: "Unauthorized" },
+        },
+      },
+    },
+    "/auth/user/{id}": {
+      delete: {
+        tags: ["Auth"],
+        summary: "Delete user by ID",
+        description: "Permanently delete a user and all their data by user ID.",
+        security: bearerSecurity,
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+            description: "User ID to delete",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "User deleted",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/MessageResponse" },
+              },
+            },
+          },
+          "401": { description: "Unauthorized" },
+          "404": { description: "User not found" },
         },
       },
     },
@@ -357,6 +518,59 @@ export const openApiSpec = {
         },
       },
     },
+    "/test-email": {
+      post: {
+        tags: ["System"],
+        summary: "Test email delivery (no auth)",
+        description:
+          "Send a test email via Brevo to verify configuration. Returns the full Brevo API response for debugging.",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                required: ["to"],
+                properties: {
+                  to: {
+                    type: "string",
+                    format: "email",
+                    example: "kunal@infrahive.ai",
+                    description: "Recipient email — replace this entirely with your address",
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Brevo response (check success field)",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean" },
+                    brevoStatus: { type: "integer" },
+                    brevoResponse: { type: "object" },
+                    config: {
+                      type: "object",
+                      properties: {
+                        senderEmail: { type: "string" },
+                        senderName: { type: "string" },
+                        apiKeySet: { type: "boolean" },
+                        apiKeyPrefix: { type: "string" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -372,7 +586,11 @@ export const openApiSpec = {
         type: "object",
         required: ["email", "password"],
         properties: {
-          email: { type: "string", format: "email", example: "user@example.com" },
+          email: {
+            type: "string",
+            format: "email",
+            example: "user@example.com",
+          },
           password: { type: "string", minLength: 6, example: "mypassword" },
           name: { type: "string", example: "Jane Doe" },
         },
@@ -381,8 +599,71 @@ export const openApiSpec = {
         type: "object",
         required: ["email", "password"],
         properties: {
-          email: { type: "string", format: "email", example: "demo@example.com" },
+          email: {
+            type: "string",
+            format: "email",
+            example: "demo@example.com",
+          },
           password: { type: "string", example: "demo1234" },
+        },
+      },
+      VerifyEmailInput: {
+        type: "object",
+        required: ["email", "code"],
+        properties: {
+          email: {
+            type: "string",
+            format: "email",
+            example: "user@example.com",
+          },
+          code: {
+            type: "string",
+            example: "483921",
+            description: "6-digit OTP from email",
+          },
+        },
+      },
+      ResendVerificationInput: {
+        type: "object",
+        required: ["email"],
+        properties: {
+          email: {
+            type: "string",
+            format: "email",
+            example: "user@example.com",
+          },
+        },
+      },
+      ForgotPasswordInput: {
+        type: "object",
+        required: ["email"],
+        properties: {
+          email: {
+            type: "string",
+            format: "email",
+            example: "user@example.com",
+          },
+        },
+      },
+      ResetPasswordInput: {
+        type: "object",
+        required: ["email", "code", "newPassword"],
+        properties: {
+          email: {
+            type: "string",
+            format: "email",
+            example: "user@example.com",
+          },
+          code: {
+            type: "string",
+            example: "483921",
+            description: "6-digit OTP from email",
+          },
+          newPassword: {
+            type: "string",
+            minLength: 6,
+            example: "newpassword123",
+          },
         },
       },
       AuthResponse: {
@@ -392,13 +673,38 @@ export const openApiSpec = {
           user: { $ref: "#/components/schemas/UserProfile" },
         },
       },
+      MessageResponse: {
+        type: "object",
+        properties: {
+          message: { type: "string" },
+          email: {
+            type: "string",
+            format: "email",
+            description: "Included on register",
+          },
+        },
+      },
       UserProfile: {
         type: "object",
         properties: {
           id: { type: "string", format: "uuid" },
           email: { type: "string", format: "email" },
           name: { type: "string", nullable: true },
+          emailVerified: { type: "boolean" },
           createdAt: { type: "string", format: "date-time" },
+        },
+      },
+      UserListItem: {
+        type: "object",
+        properties: {
+          id: { type: "string", format: "uuid" },
+          email: { type: "string", format: "email" },
+          name: { type: "string", nullable: true },
+          emailVerified: { type: "boolean" },
+          createdAt: { type: "string", format: "date-time" },
+          updatedAt: { type: "string", format: "date-time" },
+          memoCount: { type: "integer" },
+          tagCount: { type: "integer" },
         },
       },
       MemoListItem: {
