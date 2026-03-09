@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  memos Memo[]
+  tags  Tag[]
+
+  @@map("users")
+}
+
+model Memo {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  title      String    @default("Untitled memo")
+  tiptapJson Json?     @map("tiptap_json")
+  confidence String?
+  reviewDate DateTime? @map("review_date") @db.Date
+  outcome    String?
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nodes    Node[]
+  memoTags MemoTag[]
+
+  @@map("memos")
+}
+
+model Node {
+  id       String @id @default(uuid())
+  memoId   String @map("memo_id")
+  nodeType String @map("node_type")
+  content  String @default("")
+  position Int    @default(0)
+  tags     String[] @default([])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  memo Memo @relation(fields: [memoId], references: [id], onDelete: Cascade)
+
+  @@map("nodes")
+}
+
+model Tag {
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  name   String
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  memoTags MemoTag[]
+
+  @@unique([userId, name])
+  @@map("tags")
+}
+
+model MemoTag {
+  memoId String @map("memo_id")
+  tagId  String @map("tag_id")
+
+  memo Memo @relation(fields: [memoId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([memoId, tagId])
+  @@map("memo_tags")
+}

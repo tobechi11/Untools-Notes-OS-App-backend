@@ -1,0 +1,38 @@
+# dependencies
+node_modules
+
+# output
+out
+dist
+*.tgz
+
+# code coverage
+coverage
+*.lcov
+
+# logs
+logs
+*.log
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# dotenv — NEVER commit real secrets
+.env
+.env.*.local
+
+# generated prisma client (regenerated on install/build)
+node_modules/.prisma
+
+# do NOT gitignore prisma/migrations — they are required for production deploys
+
+# caches
+.eslintcache
+.cache
+*.tsbuildinfo
+
+# IDEs
+.idea
+.vscode
+
+# OS
+.DS_Store
+Thumbs.db
