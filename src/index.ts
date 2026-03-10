@@ -9,6 +9,7 @@ import { tagRoutes } from "./routes/tags.ts";
 import { authMiddleware } from "./lib/auth.ts";
 import { openApiSpec } from "./lib/openapi.ts";
 import { sendTestEmail } from "./services/email.ts";
+import { seedAllUsers, seedUserData } from "./services/seed-data.ts";
 
 const app = new Hono();
 
@@ -57,6 +58,15 @@ api.post("/test-email", async (c) => {
         apiKeyPrefix: process.env.BREVO_API_KEY?.slice(0, 12) + "...",
       },
     });
+  } catch (err: any) {
+    return c.json({ success: false, error: err.message }, 500);
+  }
+});
+
+api.post("/seed", async (c) => {
+  try {
+    const result = await seedAllUsers();
+    return c.json({ success: true, ...result });
   } catch (err: any) {
     return c.json({ success: false, error: err.message }, 500);
   }

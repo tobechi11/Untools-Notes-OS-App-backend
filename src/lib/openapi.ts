@@ -499,6 +499,65 @@ export const openApiSpec = {
         },
       },
     },
+    "/tags/{name}": {
+      delete: {
+        tags: ["Tags"],
+        summary: "Delete tag by name",
+        description:
+          "Deletes a tag and removes it from all memo associations. Does not modify memo content.",
+        security: bearerSecurity,
+        parameters: [
+          {
+            name: "name",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            description: "Tag name (URL-encoded)",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Deleted",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: { ok: { type: "boolean" } },
+                },
+              },
+            },
+          },
+          "404": { description: "Tag not found" },
+        },
+      },
+    },
+    "/seed": {
+      post: {
+        tags: ["System"],
+        summary: "Seed sample data for all users (no auth)",
+        description:
+          "Creates 3 sample memos with structured nodes, tags, and metadata for every user in the database. Safe to call multiple times — each call adds new memos.",
+        responses: {
+          "200": {
+            description: "Seed complete",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean" },
+                    users: { type: "integer" },
+                    memos: { type: "integer" },
+                    tags: { type: "integer" },
+                    nodes: { type: "integer" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
     "/health": {
       get: {
         tags: ["System"],

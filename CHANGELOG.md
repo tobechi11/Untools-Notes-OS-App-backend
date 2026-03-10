@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0 — 2026-03-10
+
+Delete support, seed API, and node extraction fix.
+
+- DELETE /tags/:name endpoint to remove tags by name (with OpenAPI spec)
+- POST /api/seed public endpoint to auto-populate sample data for all users
+- Fixed structured node content extraction for TipTap atom nodes (sibling text)
+- Seed data uses correct TipTap JSON structure for atom structured nodes
+
 ## 0.3.1 — 2026-03-09
 
 Admin & debugging endpoints.

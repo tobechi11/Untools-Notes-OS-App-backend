@@ -39,29 +39,42 @@ export function extractNodes(tiptapJson: TipTapNode): ExtractedNode[] {
   const nodes: ExtractedNode[] = [];
   let position = 0;
 
-  function walk(node: TipTapNode) {
-    if (node.type === "structuredNode" && node.attrs) {
-      const id = node.attrs.id as string;
-      const nodeType = node.attrs.nodeType as string;
-      if (id && nodeType) {
-        const content = extractPlainText(node).trim();
-        nodes.push({
-          id,
-          nodeType,
-          content,
-          position: position++,
-          tags: extractInlineTags(content),
-        });
+  function walkChildren(children: TipTapNode[]) {
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i];
+
+      if (child.type === "structuredNode" && child.attrs) {
+        const id = child.attrs.id as string;
+        const nodeType = child.attrs.nodeType as string;
+        if (id && nodeType) {
+          // Atom node: content lives in sibling text nodes that follow it
+          // until the next structuredNode or end of parent
+          let content = (child.attrs.label as string) || "";
+          for (let j = i + 1; j < children.length; j++) {
+            if (children[j].type === "structuredNode") break;
+            content += extractPlainText(children[j]);
+          }
+          content = content.trim();
+
+          nodes.push({
+            id,
+            nodeType,
+            content,
+            position: position++,
+            tags: extractInlineTags(content),
+          });
+        }
       }
-    }
-    if (node.content) {
-      for (const child of node.content) {
-        walk(child);
+
+      if (child.content) {
+        walkChildren(child.content);
       }
     }
   }
 
-  walk(tiptapJson);
+  if (tiptapJson.content) {
+    walkChildren(tiptapJson.content);
+  }
   return nodes;
 }
 
