@@ -1,4 +1,9 @@
 FROM oven/bun:1.2 AS base
+
+RUN apt-get update -y \
+  && apt-get install -y openssl ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 FROM base AS deps
