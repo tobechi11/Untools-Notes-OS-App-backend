@@ -289,6 +289,17 @@ export async function seedUserData(userId: string): Promise<{ memos: number; tag
   for (const sample of SAMPLE_MEMOS) {
     const tiptapJson = JSON.parse(JSON.stringify(sample.tiptapJson));
 
+    // Replace all structuredNode IDs with fresh UUIDs so the seed can
+    // be called multiple times without duplicate-key errors.
+    (function refreshIds(node: any) {
+      if (node?.type === "structuredNode" && node.attrs?.id) {
+        node.attrs.id = randomUUID();
+      }
+      if (Array.isArray(node?.content)) {
+        node.content.forEach(refreshIds);
+      }
+    })(tiptapJson);
+
     const memo = await prisma.memo.create({
       data: {
         userId,
