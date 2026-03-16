@@ -9,6 +9,9 @@ dashboardRoutes.get("/nodes", async (c) => {
   const tagsParam = c.req.query("tags");
   const confidence = c.req.query("confidence");
   const outcome = c.req.query("outcome");
+  const q = c.req.query("q")?.trim().toLowerCase() || "";
+  const dateFrom = c.req.query("date_from");
+  const dateTo = c.req.query("date_to");
   const limit = Math.min(Number(c.req.query("limit")) || 50, 200);
   const offset = Number(c.req.query("offset")) || 0;
 
@@ -43,6 +46,23 @@ dashboardRoutes.get("/nodes", async (c) => {
     where.nodeType = { in: nodeTypeFilters };
   }
 
+  if (q) {
+    where.content = { contains: q, mode: "insensitive" };
+  }
+
+  const createdAtFilter: Record<string, Date> = {};
+  if (dateFrom) {
+    createdAtFilter.gte = new Date(dateFrom);
+  }
+  if (dateTo) {
+    const end = new Date(dateTo);
+    end.setHours(23, 59, 59, 999);
+    createdAtFilter.lte = end;
+  }
+  if (Object.keys(createdAtFilter).length > 0) {
+    where.createdAt = createdAtFilter;
+  }
+
   const nodes = await prisma.node.findMany({
     where,
     include: {
@@ -62,6 +82,7 @@ dashboardRoutes.get("/nodes", async (c) => {
     nodeType: n.nodeType,
     content: n.content,
     position: n.position,
+    createdAt: n.createdAt.toISOString(),
     memoId: n.memo.id,
     memoTitle: n.memo.title,
     memoTags: n.memo.memoTags.map((mt) => mt.tag.name),
