@@ -28,6 +28,7 @@
     "@scalar/hono-api-reference": "^0.10.0",
     "hono": "^4.12.5",
     "nodemailer": "^8.0.2",
+    "openai": "^6.31.0",
     "pg": "^8.20.0",
     "prisma": "^7.4.2"
   }
