@@ -6,6 +6,7 @@ import { authRoutes } from "./routes/auth.ts";
 import { memoRoutes } from "./routes/memos.ts";
 import { dashboardRoutes } from "./routes/dashboard.ts";
 import { tagRoutes } from "./routes/tags.ts";
+import { transcribeRoutes } from "./routes/transcribe.ts";
 import { authMiddleware } from "./lib/auth.ts";
 import { openApiSpec } from "./lib/openapi.ts";
 import { sendTestEmail } from "./services/email.ts";
@@ -76,6 +77,7 @@ api.use("/*", authMiddleware);
 api.route("/memos", memoRoutes);
 api.route("/dashboard", dashboardRoutes);
 api.route("/tags", tagRoutes);
+api.route("/transcribe", transcribeRoutes);
 
 app.route("/api", api);
 
