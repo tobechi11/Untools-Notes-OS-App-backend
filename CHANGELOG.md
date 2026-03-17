@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.5.0 — 2026-03-17
+
+AI dictation via OpenAI Whisper.
+
+- POST /api/transcribe endpoint accepts audio file (FormData), returns transcribed text
+- Uses OpenAI Whisper API with configurable model via OPENAI_WHISPER_MODEL env var
+- Protected by auth middleware
+- Added openai SDK dependency
+
+## 0.4.1 — 2026-03-17
+
+Email service migrated from Brevo API key to SMTP.
+
+- Replaced Brevo transactional API with nodemailer SMTP transport
+- Configurable via BREVO_SMTP_HOST, BREVO_SMTP_PORT, BREVO_SMTP_USER, BREVO_SMTP_PASS
+- BREVO_SENDER_EMAIL and BREVO_SENDER_NAME for from address
+- OTP verification and password reset emails sent via SMTP
+
 ## 0.4.0 — 2026-03-10
 
 Delete support, seed API, and node extraction fix.
