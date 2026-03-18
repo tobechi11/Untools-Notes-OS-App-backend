@@ -48,11 +48,25 @@ model Memo {
   createdAt  DateTime  @default(now()) @map("created_at")
   updatedAt  DateTime  @updatedAt @map("updated_at")
 
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  nodes    Node[]
-  memoTags MemoTag[]
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nodes      Node[]
+  memoTags   MemoTag[]
+  aiMessages AiChatMessage[]
 
   @@map("memos")
+}
+
+model AiChatMessage {
+  id        String   @id @default(uuid())
+  memoId    String   @map("memo_id")
+  role      String   // "user" | "assistant"
+  content   String
+  model     String?  // "auto" | "claude" | "gpt5"
+  createdAt DateTime @default(now()) @map("created_at")
+
+  memo Memo @relation(fields: [memoId], references: [id], onDelete: Cascade)
+
+  @@map("ai_chat_messages")
 }
 
 model Node {

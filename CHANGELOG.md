@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.6.0 — 2026-03-18
+
+AI chat persistence, model routing, refined prompts, and expanded seed data.
+
+- AiChatMessage table for persisting AI sidebar conversations per memo
+- GET /ai/chat/history/:memoId, POST /ai/chat/save, DELETE /ai/chat/history/:memoId endpoints
+- Memo ownership verification on all chat history endpoints
+- Auto model selection uses gpt-4.1-mini; Claude and GPT-5 remain explicit choices
+- System prompt updated with full-memo context fallback (no selection → entire memo)
+- Tone rules: no filler phrases, no preamble, direct output only
+- Typed Hono context for userId/userEmail (fixes TS redlines)
+- Prisma client import from generated path (fixes driver adapter type resolution)
+- Expanded seed data: 6 realistic memos with detailed structured nodes, mental models, and tags
+
 ## 0.5.0 — 2026-03-17
 
 AI dictation via OpenAI Whisper.
