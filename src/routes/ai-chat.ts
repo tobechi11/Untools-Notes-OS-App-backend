@@ -14,42 +14,59 @@ type ChatMessage = {
   content: string;
 };
 
-const GRAMMAR_ACTIONS = ["fix grammar", "grammar", "simplify", "summarize"];
+type Provider = "openai" | "anthropic" | "openai-mini";
 
-function pickProvider(model: ModelId, lastMessage: string): "openai" | "anthropic" {
+function pickProvider(model: ModelId, _lastMessage: string): Provider {
   if (model === "claude") return "anthropic";
   if (model === "gpt5") return "openai";
-  // Auto: grammar/summarize → OpenAI, everything else → Anthropic
-  const lower = lastMessage.toLowerCase();
-  if (GRAMMAR_ACTIONS.some((a) => lower.includes(a))) return "openai";
-  return "anthropic";
+  // Auto → gpt-4.1-mini (fast, cheap, good enough for most tasks)
+  return "openai-mini";
 }
 
-function buildSystemPrompt(selectedText: string, fullMemoContent?: string): string {
+const TONE_RULES = `
+Rules:
+- Never use filler phrases like "Here you go", "Certainly", "Sure!", "Of course!", "Here it is", "Let me help", "I'd be happy to", "Great question", or similar.
+- Start directly with the content. If asked to rewrite text, output the rewritten text immediately.
+- Be concise. No preamble, no sign-offs, no "Let me know if you need anything else."
+- Match the user's tone and formality level.
+- When providing revised text, write it so the user can copy-paste it directly into their document.`.trim();
+
+function buildSystemPrompt(
+  selectedText: string,
+  fullMemoContent?: string
+): string {
   if (selectedText.trim()) {
-    return `You are an AI writing assistant helping a user refine a decision memo. The user has selected the following text from their document:
+    return `You are a writing assistant for decision memos. The user selected this text from their document:
 
 ---
 ${selectedText}
 ---
 
-Help the user improve, refine, or transform this text based on their instructions. When providing revised text, write it clearly so the user can apply it directly to their document. Be concise and focused on the writing task.`;
+Improve, refine, or transform it based on their instructions. Output clean text ready to paste back into the document.
+
+${TONE_RULES}`;
   }
 
   if (fullMemoContent?.trim()) {
-    return `You are an AI writing assistant helping a user with their decision memo. Here is the full memo content:
+    return `You are a writing assistant for decision memos. Here is the full memo:
 
 ---
 ${fullMemoContent}
 ---
 
-Help the user with any questions or improvements they need for this memo. When providing revised text, write it clearly. Be concise and focused on the writing task.`;
+Answer questions or provide improvements based on the user's instructions. When rewriting, output clean text ready to paste.
+
+${TONE_RULES}`;
   }
 
-  return `You are an AI writing assistant helping a user with their decision memo. Help them with writing, editing, brainstorming, or any other writing-related tasks. Be concise and focused.`;
+  return `You are a writing assistant for decision memos. Help with writing, editing, and brainstorming.
+
+${TONE_RULES}`;
 }
 
-export const aiChatRoutes = new Hono();
+type Env = { Variables: { userId: string; userEmail: string } };
+
+export const aiChatRoutes = new Hono<Env>();
 
 // Stream AI response
 aiChatRoutes.post("/", async (c) => {
@@ -63,20 +80,20 @@ aiChatRoutes.post("/", async (c) => {
     return c.json({ error: "No messages provided" }, 400);
   }
 
-  const lastUserMessage = messages.findLast((m) => m.role === "user")?.content ?? "";
+  const lastUserMessage =
+    messages.findLast((m) => m.role === "user")?.content ?? "";
   const provider = pickProvider(model, lastUserMessage);
   const systemPrompt = buildSystemPrompt(selectedText, fullMemoContent);
 
   return streamSSE(c, async (stream) => {
     try {
-      if (provider === "openai") {
+      if (provider === "openai" || provider === "openai-mini") {
+        const openaiModel =
+          provider === "openai-mini" ? "gpt-4.1-mini" : "gpt-4o";
         const completion = await openai.chat.completions.create({
-          model: "gpt-4o",
+          model: openaiModel,
           stream: true,
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...messages,
-          ],
+          messages: [{ role: "system", content: systemPrompt }, ...messages],
         });
 
         for await (const chunk of completion) {
@@ -87,7 +104,7 @@ aiChatRoutes.post("/", async (c) => {
         }
       } else {
         const response = anthropic.messages.stream({
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-4-6",
           max_tokens: 4096,
           system: systemPrompt,
           messages: messages.map((m) => ({
@@ -101,7 +118,9 @@ aiChatRoutes.post("/", async (c) => {
             event.type === "content_block_delta" &&
             event.delta.type === "text_delta"
           ) {
-            await stream.writeSSE({ data: JSON.stringify({ text: event.delta.text }) });
+            await stream.writeSSE({
+              data: JSON.stringify({ text: event.delta.text }),
+            });
           }
         }
       }
@@ -132,7 +151,13 @@ aiChatRoutes.get("/history/:memoId", async (c) => {
   const messages = await prisma.aiChatMessage.findMany({
     where: { memoId },
     orderBy: { createdAt: "asc" },
-    select: { id: true, role: true, content: true, model: true, createdAt: true },
+    select: {
+      id: true,
+      role: true,
+      content: true,
+      model: true,
+      createdAt: true,
+    },
   });
 
   return c.json({ messages });
