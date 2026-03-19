@@ -48,12 +48,20 @@ export function extractNodes(tiptapJson: TipTapNode): ExtractedNode[] {
         const id = child.attrs.id as string;
         const nodeType = child.attrs.nodeType as string;
         if (id && nodeType) {
-          // Atom node: content lives in sibling text nodes that follow it
-          // until the next structuredNode or end of parent
           let content = (child.attrs.label as string) || "";
-          for (let j = i + 1; j < children.length; j++) {
-            if (children[j].type === "structuredNode") break;
-            content += extractPlainText(children[j]);
+
+          // NEW FORMAT: block node with nested content (bulletList)
+          if (child.content && child.content.length > 0) {
+            const nestedText = extractPlainText({ content: child.content });
+            if (nestedText.trim()) {
+              content = content ? `${content} ${nestedText.trim()}` : nestedText.trim();
+            }
+          } else {
+            // LEGACY: inline atom — content lives in sibling text nodes
+            for (let j = i + 1; j < children.length; j++) {
+              if (children[j].type === "structuredNode") break;
+              content += extractPlainText(children[j]);
+            }
           }
           content = content.trim();
 

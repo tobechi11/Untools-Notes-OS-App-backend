@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.0 — 2026-03-19
+
+Accordion structured nodes support and enriched seed data.
+
+- Node extractor updated for dual-format support: reads nested `child.content` for new block-accordion nodes, falls back to sibling text for legacy inline atoms
+- Seed data rewritten with `snode()` helper producing block-level structuredNodes with bulletList content
+- Each seed node now contains meaningful bullet points inside the accordion body
+- Seed memos use headings, paragraphs, and bullet lists between accordion nodes for richer document structure
+
 ## 0.6.0 — 2026-03-18
 
 AI chat persistence, model routing, refined prompts, and expanded seed data.
