@@ -29,7 +29,14 @@ Rules:
 - Start directly with the content. If asked to rewrite text, output the rewritten text immediately.
 - Be concise. No preamble, no sign-offs, no "Let me know if you need anything else."
 - Match the user's tone and formality level.
-- When providing revised text, write it so the user can copy-paste it directly into their document.`.trim();
+- When providing revised text, write it so the user can copy-paste it directly into their document.
+
+CRITICAL — Preserve tags and nodes:
+- The document contains structured nodes (like @Decision, @Risk, @Assumption, @Outcome, @Metric, @Status, @ReviewDate, @Confidence, etc.) and inline #tags (like #growth, #hiring, etc.).
+- You MUST preserve ALL existing structured nodes and inline tags in your output. Never remove, rename, or alter them.
+- If you rewrite or improve text, keep every @NodeType and #tag exactly as it appears in the original.
+- If you add new content, you may suggest new nodes or tags, but never at the expense of existing ones.
+- This is non-negotiable — losing nodes or tags breaks the document's structured data.`.trim();
 
 function buildSystemPrompt(
   selectedText: string,

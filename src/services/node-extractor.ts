@@ -10,6 +10,7 @@ export type DerivedMetadata = {
   confidence: string | null;
   reviewDate: Date | null;
   outcome: string | null;
+  status: string | null;
 };
 
 type TipTapNode = {
@@ -89,6 +90,7 @@ export function deriveMetadata(nodes: ExtractedNode[]): DerivedMetadata {
   let confidence: string | null = null;
   let reviewDate: Date | null = null;
   let outcome: string | null = null;
+  let status: string | null = null;
 
   for (const node of nodes) {
     switch (node.nodeType) {
@@ -101,8 +103,11 @@ export function deriveMetadata(nodes: ExtractedNode[]): DerivedMetadata {
       case "Outcome":
         outcome = node.content ? node.content.toLowerCase() : null;
         break;
+      case "Status":
+        status = node.content || null;
+        break;
     }
   }
 
-  return { confidence, reviewDate, outcome };
+  return { confidence, reviewDate, outcome, status };
 }
