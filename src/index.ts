@@ -8,6 +8,7 @@ import { dashboardRoutes } from "./routes/dashboard.ts";
 import { tagRoutes } from "./routes/tags.ts";
 import { transcribeRoutes } from "./routes/transcribe.ts";
 import { aiChatRoutes } from "./routes/ai-chat.ts";
+import { realtimeSessionRoutes } from "./routes/realtime-session.ts";
 import { authMiddleware } from "./lib/auth.ts";
 import { openApiSpec } from "./lib/openapi.ts";
 import { sendTestEmail } from "./services/email.ts";
@@ -80,6 +81,7 @@ api.route("/dashboard", dashboardRoutes);
 api.route("/tags", tagRoutes);
 api.route("/transcribe", transcribeRoutes);
 api.route("/ai/chat", aiChatRoutes);
+api.route("/realtime", realtimeSessionRoutes);
 
 app.route("/api", api);
 

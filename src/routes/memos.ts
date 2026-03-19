@@ -72,6 +72,7 @@ memoRoutes.get("/", async (c) => {
     confidence: m.confidence,
     reviewDate: m.reviewDate?.toISOString().split("T")[0] ?? null,
     outcome: m.outcome,
+    status: m.status ?? null,
     updatedAt: m.updatedAt.toISOString(),
     reviewDue: isReviewDue(m.reviewDate, m.outcome),
   }));
@@ -183,6 +184,7 @@ memoRoutes.put("/:id", async (c) => {
       confidence: metadata.confidence,
       reviewDate: metadata.reviewDate,
       outcome: metadata.outcome,
+      status: metadata.status,
     },
   });
 

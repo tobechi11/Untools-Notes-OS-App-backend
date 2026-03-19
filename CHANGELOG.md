@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.8.0 — 2026-03-20
+
+Real-time streaming dictation via OpenAI Realtime API.
+
+- POST /api/realtime/session endpoint mints ephemeral tokens for browser WebSocket auth
+- Browser mic audio streamed via AudioWorklet (PCM16 24kHz) directly to OpenAI Realtime API
+- Progressive text insertion into TipTap editor as user speaks
+- Server VAD detects speech turns; model responses cancelled (transcription-only mode)
+- Dictation button shows animated teal audio bars that react to mic volume
+- Realtime model names configurable via OPENAI_REALTIME_MODEL and OPENAI_REALTIME_TRANSCRIPTION_MODEL env vars
+- Old Whisper-based transcribe endpoint preserved as fallback
+
+## 0.7.0 — 2026-03-19
+
+Accordion structured nodes support and enriched seed data.
+
+- Node extractor updated for dual-format support: reads nested `child.content` for new block-accordion nodes, falls back to sibling text for legacy inline atoms
+- Seed data rewritten with `snode()` helper producing block-level structuredNodes with bulletList content
+- Each seed node now contains meaningful bullet points inside the accordion body
+- Seed memos use headings, paragraphs, and bullet lists between accordion nodes for richer document structure
+
 ## 0.6.0 — 2026-03-18
 
 AI chat persistence, model routing, refined prompts, and expanded seed data.

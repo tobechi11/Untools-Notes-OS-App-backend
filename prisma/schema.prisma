@@ -45,6 +45,7 @@ model Memo {
   confidence String?
   reviewDate DateTime? @map("review_date") @db.Date
   outcome    String?
+  status     String?
   createdAt  DateTime  @default(now()) @map("created_at")
   updatedAt  DateTime  @updatedAt @map("updated_at")
 
