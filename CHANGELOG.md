@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.8.0 — 2026-03-20
+
+Real-time streaming dictation via OpenAI Realtime API.
+
+- POST /api/realtime/session endpoint mints ephemeral tokens for browser WebSocket auth
+- Browser mic audio streamed via AudioWorklet (PCM16 24kHz) directly to OpenAI Realtime API
+- Progressive text insertion into TipTap editor as user speaks
+- Server VAD detects speech turns; model responses cancelled (transcription-only mode)
+- Dictation button shows animated teal audio bars that react to mic volume
+- Realtime model names configurable via OPENAI_REALTIME_MODEL and OPENAI_REALTIME_TRANSCRIPTION_MODEL env vars
+- Old Whisper-based transcribe endpoint preserved as fallback
+
 ## 0.7.0 — 2026-03-19
 
 Accordion structured nodes support and enriched seed data.
