@@ -9,6 +9,7 @@ import { tagRoutes } from "./routes/tags.ts";
 import { transcribeRoutes } from "./routes/transcribe.ts";
 import { aiChatRoutes } from "./routes/ai-chat.ts";
 import { realtimeSessionRoutes } from "./routes/realtime-session.ts";
+import { linkableNodesRoutes } from "./routes/linkable-nodes.ts";
 import { authMiddleware } from "./lib/auth.ts";
 import { openApiSpec } from "./lib/openapi.ts";
 import { sendTestEmail } from "./services/email.ts";
@@ -82,6 +83,7 @@ api.route("/tags", tagRoutes);
 api.route("/transcribe", transcribeRoutes);
 api.route("/ai/chat", aiChatRoutes);
 api.route("/realtime", realtimeSessionRoutes);
+api.route("/linkable-nodes", linkableNodesRoutes);
 
 app.route("/api", api);
 
