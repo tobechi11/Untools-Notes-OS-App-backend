@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.0 — 2026-03-20
+
+Problem and LinkedTo node types with linkable-nodes API.
+
+- GET /api/linkable-nodes endpoint returns all Problem and Decision nodes for the authenticated user
+- Response includes node id, type, content, parent memo id, and memo title for display in the LinkedTo picker
+- Scoped to user via memo relation; limited to 200 most recent results
+
 ## 0.8.0 — 2026-03-20
 
 Real-time streaming dictation via OpenAI Realtime API.
